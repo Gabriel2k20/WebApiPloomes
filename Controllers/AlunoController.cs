@@ -71,7 +71,7 @@ namespace WebAPI.Controllers
             var query = alunos.Select(al => new
             {
                 Aluno = al.Nome,
-                Medias = al.RegProvas.Where(x => x.IdAlunoNavigation.Nome.ToUpper() == nome.ToUpper()).GroupBy(al => al.IdInstituicaoNavigation.Nome)
+                Medias = al.RegProvas.GroupBy(al => al.IdInstituicaoNavigation.Nome)
                                .Select(x => new
                                {
                                    MediaGeral = Math.Round(x.Select(x => x.Nota).Average(), 2),
@@ -83,7 +83,7 @@ namespace WebAPI.Controllers
                                    }).Distinct()
                                }),
                 Matriculas = al.HistoricoAlunoes.GroupBy(x => new { x.IdAlunoNavigation.Nome, x.IdAluno }).Select(x => new { Nome = x.Select(x => x.IdInstituicaoNavigation.Nome).Distinct(), DataMatricula = x.Select(x => x.DtMatricula.ToString("dd.MM.yyyy")).Distinct(), DatasRematricula = x.Where(x => x.DtRematricula != null).Select(x => x.DtRematricula?.Date.ToString("dd.MM.yyyy")).Distinct() })
-            }).OrderBy(x => x.Aluno);
+            }).Where(x => x.Aluno.ToUpper() == nome.ToUpper());
 
             if (query == null) { return NotFound(); }
 
@@ -104,7 +104,7 @@ namespace WebAPI.Controllers
             //(caso estejam cadastrados em mais que uma), a data de matricula e as datas de rematricula(se houver),
             //com filtro por estado!
 
-            var query = alunos.Where(x => x.CepNavigation.Uf.ToUpper() == nome.ToUpper()).Select(al => new
+            var query = alunos.Where(x=>x.CepNavigation.Uf.ToUpper() == nome).Select(al => new
             {
                 Aluno = al.Nome,
                 Medias = al.RegProvas.GroupBy(al => al.IdInstituicaoNavigation.Nome)
@@ -129,11 +129,11 @@ namespace WebAPI.Controllers
         [HttpGet("municipio/{nome}")]
         public async Task<ActionResult<Aluno>> GetAlunoByCity(string nome)
         {
-            await _context.RegProvas.AsNoTracking().ToListAsync();
-            await _context.Instituicoes.AsNoTracking().ToListAsync();
-            await _context.HistoricoAlunos.AsNoTracking().ToListAsync();
-            await _context.Ceps.AsNoTracking().ToListAsync();
-            var alunos = await _context.Alunos.AsNoTracking().ToListAsync();
+            await _context.RegProvas.ToListAsync();
+            await _context.Instituicoes.ToListAsync();
+            await _context.HistoricoAlunos.ToListAsync();
+            await _context.Ceps.ToListAsync();
+            var alunos = await _context.Alunos.ToListAsync();
             //Vamos fazer uma query, retornando o aluno, as medias deles, medias por instituicao
             //(caso estejam cadastrados em mais que uma), a data de matricula e as datas de rematricula(se houver),
             //com filtro por municipio!                     
@@ -167,8 +167,8 @@ namespace WebAPI.Controllers
             if (aluno.Cep.getJson() == null) { return "Cep inválido"; }
             var jsonCep = aluno.Cep.getJson();
             jsonCep = jsonCep.Replace("\"cep\"", "\"codigo\"").Replace("\"localidade\"", "\"municipio\"").Replace("-", "");
-            Cep objCep = JsonConvert.DeserializeObject<Cep>(jsonCep);
 
+            Cep objCep = JsonConvert.DeserializeObject<Cep>(jsonCep);
             Cep resCep = new Cep
             {
                 Codigo = objCep.Codigo,
@@ -180,25 +180,33 @@ namespace WebAPI.Controllers
                 Instituicoes = objCep.Instituicoes
             };
 
-            var resAlu = new Aluno { IdAluno = id, Cpf = aluno.Cpf, Nome = aluno.Nome, Cep = aluno.Cep, NrRes = aluno.NrRes, CepNavigation = null, HistoricoAlunoes = { }, RegProvas = { } };
-            _context.Entry(resAlu).State = EntityState.Modified;
-            var json = new JavaScriptSerializer().Serialize(resAlu);
+            var resAlu = new Aluno
+            {
+                Cpf = aluno.Cpf,
+                Nome = aluno.Nome,
+                Cep = aluno.Cep,
+                NrRes = aluno.NrRes,
+                CepNavigation = null,
+                HistoricoAlunoes = { },
+                RegProvas = { }
+            };
+
             //Validacoes
             if (resAlu.Nome.validarNome() != null) { return resAlu.Nome.validarNome(); }
             if (resAlu.Cpf.validarCpf() != null) { return resAlu.Cpf.validarCpf(); }
             if (resAlu.Cep.validarCep() != null) { return resAlu.Cep.validarCep(); }
             if (resAlu.NrRes.validarNrRes() != null) { return resAlu.NrRes.validarNrRes(); }
             var jsonAlu = new JavaScriptSerializer().Serialize(resAlu);
-
-            if (cep.Where(x => x.Codigo == resCep.Codigo).Count() != 0)
-            {
-                _context.Alunos.Add(resAlu);
-            }
-            else
+            if (cep.Where(x => x.Codigo == resCep.Codigo).Count() == 0)
             {
                 _context.Ceps.Add(resCep);
             }
+            else
+            {
+                
+            }
 
+            _context.Entry(resAlu);
 
             try
             {
