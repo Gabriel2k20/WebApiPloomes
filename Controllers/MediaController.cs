@@ -67,7 +67,7 @@ namespace WebAPI.Controllers
             await _context.Instituicoes.ToListAsync();
 
             var notas = await _context.RegProvas.ToListAsync();
-            var media = notas.GroupBy(x => new { x.IdInstituicaoNavigation.Nome, x.IdInstituicaoNavigation.CepNavigation.Uf }).Select(x => new { Instituicao = new { Nome = x.Select(x => x.IdInstituicaoNavigation.Nome).Distinct() }, Media = Math.Round(x.Select(x => x.Nota).Average(), 2), Estado = x.Select(x => x.IdInstituicaoNavigation.CepNavigation.Uf).Distinct() }).OrderBy(x => x.Media);
+            var media = notas.GroupBy(x => x.IdInstituicaoNavigation.CepNavigation.Uf).Select(x => new { Instituicao = new { Nome = x.Select(x => x.IdInstituicaoNavigation.Nome).Distinct() }, Media = x.Select(x=>x.Nota).Average() , Estado = x.Select(x => x.IdInstituicaoNavigation.CepNavigation.Uf).Distinct() }).OrderBy(x => x.Media);
             return Ok(media
                         );
 
