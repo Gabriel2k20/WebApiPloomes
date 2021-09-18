@@ -41,7 +41,7 @@ namespace WebAPI.Controllers
 
 
             var notas = await _context.RegProvas.ToListAsync();
-            var media = notas.GroupBy(x => x.IdInstituicaoNavigation.Nome).Select(x => new { Instituicao = x.Select(x => x.IdInstituicaoNavigation.Nome).Distinct(), Media = Math.Round(x.Select(x => x.Nota).Average(), 2) }).OrderBy(x => x.Media);
+            var media = notas.GroupBy(x => x.IdInstituicaoNavigation.Nome).Select(x => new { Instituicao = x.Select(x => x.IdInstituicaoNavigation.Nome).First(), Media = Math.Round(x.Select(x => x.Nota).Average(), 2) }).OrderBy(x => x.Media);
             return Ok(media
                         );
 
@@ -53,7 +53,7 @@ namespace WebAPI.Controllers
             await _context.Instituicoes.ToListAsync();
 
             var notas = await _context.RegProvas.ToListAsync();
-            var media = notas.Where(x => x.IdInstituicaoNavigation.Nome.ToUpper() == nome.ToUpper()).GroupBy(x => x.IdInstituicaoNavigation.Nome).Select(x => new { Instituicao = x.Select(x => x.IdInstituicaoNavigation.Nome).Distinct(), Media = Math.Round(x.Select(x => x.Nota).Average()) }).OrderBy(x => x.Media);
+            var media = notas.Where(x => x.IdInstituicaoNavigation.Nome.ToUpper() == nome.ToUpper()).GroupBy(x => x.IdInstituicaoNavigation.Nome).Select(x => new { Instituicao = x.Select(x => x.IdInstituicaoNavigation.Nome).First(), Media = Math.Round(x.Select(x => x.Nota).Average()) }).OrderBy(x => x.Media);
             return Ok(media
                         );
 
@@ -67,7 +67,7 @@ namespace WebAPI.Controllers
             await _context.Instituicoes.ToListAsync();
 
             var notas = await _context.RegProvas.ToListAsync();
-            var media = notas.GroupBy(x => x.IdInstituicaoNavigation.CepNavigation.Uf).Select(x => new { Instituicao = new { Nome = x.Select(x => x.IdInstituicaoNavigation.Nome).Distinct() }, Media = x.Select(x=>x.Nota).Average() , Estado = x.Select(x => x.IdInstituicaoNavigation.CepNavigation.Uf).Distinct() }).OrderBy(x => x.Media);
+            var media = notas.GroupBy(x => x.IdInstituicaoNavigation.CepNavigation.Uf).Select(x => new { Instituicoes = new { Nome = x.Select(x => x.IdInstituicaoNavigation.Nome).Distinct() }, Media = Math.Round(x.Select(x=>x.Nota).Average(),2) , Estado = x.Select(x => x.IdInstituicaoNavigation.CepNavigation.Uf).First()}).OrderBy(x => x.Media);
             return Ok(media
                         );
 
@@ -81,7 +81,7 @@ namespace WebAPI.Controllers
             await _context.Ceps.ToListAsync();
 
             var notas = await _context.RegProvas.ToListAsync();
-            var media = notas.Where(x => x.IdInstituicaoNavigation.CepNavigation.Uf == nome.ToUpper()).GroupBy(x => new { x.IdInstituicaoNavigation.Nome, x.IdInstituicaoNavigation.CepNavigation.Uf }).Select(x => new { Instituicao = new { Nome = x.Select(x => x.IdInstituicaoNavigation.Nome).Distinct() }, Media = Math.Round(x.Select(x => x.Nota).Average(), 2), Estado = x.Select(x => x.IdInstituicaoNavigation.CepNavigation.Uf).Distinct() }).OrderBy(x => x.Media);
+            var media = notas.Where(x => x.IdInstituicaoNavigation.CepNavigation.Uf == nome.ToUpper()).GroupBy(x => new { x.IdInstituicaoNavigation.Nome, x.IdInstituicaoNavigation.CepNavigation.Uf }).Select(x => new { Instituicoes = new { Nome = x.Select(x => x.IdInstituicaoNavigation.Nome).Distinct() }, Media = Math.Round(x.Select(x => x.Nota).Average(), 2), Estado = x.Select(x => x.IdInstituicaoNavigation.CepNavigation.Uf).First() }).OrderBy(x => x.Media);
             return Ok(media
                         );
 
