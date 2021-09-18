@@ -13,7 +13,7 @@ namespace WebAPI.Functions
 {
     public static class Functions
     {
-
+        //Função para formatar JSON
         public static string getJson(this object cep)
         {
             try
